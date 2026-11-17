@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShioGonz Live Event Countdown</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>ShioGonz Live Event Countdown</h1>
+
+    <label for="eventName">Event Name:</label>
+    <input type="text" id="eventName" placeholder="Enter event name">
+
+    <br><br>
+
+    <label for="eventDate">Event Date and Time:</label>
+    <input type="datetime-local" id="eventDate">
+
+    <br><br>
+
+    <button id="startButton">Start Countdown</button>
+
+    <h2 id="eventTitle">Your event countdown will appear here</h2>
+
+    <div id="countdown">
+        <p><span id="days">0</span> Days</p>
+        <p><span id="hours">0</span> Hours</p>
+        <p><span id="minutes">0</span> Minutes</p>
+        <p><span id="seconds">0</span> Seconds</p>
+    </div>
+
+    <p id="message"></p>
+    <script src="script.js"></script>
+
+</body>
+</html>
