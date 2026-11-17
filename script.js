@@ -252,19 +252,13 @@ startButton.addEventListener(
             ).getTime();
 
         /* Schedule music from this user click */
-        try {
-
-            await scheduleConcertMusic(
-                eventDate
-            );
-
-        } catch (error) {
-
-            console.log(
-                "Audio preparation error:",
-                error
-            );
-        }
+        scheduleConcertMusic(eventDate)
+    .catch(error => {
+        console.log(
+            "Audio preparation error:",
+            error
+        );
+    });
 
         eventTitle.textContent =
             eventName;
