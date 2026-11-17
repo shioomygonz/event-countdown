@@ -14,127 +14,12 @@ const closeOverlay = document.getElementById("closeOverlay");
 const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
-let audioContext;
-const concertAudio = new Audio("concert-intro.mp3");
+
+/* MUSIC */
+const concertAudio = new Audio("./concert-intro.mp3");
 concertAudio.preload = "auto";
 
-/* -------------------------
-   AUDIO SETUP
-------------------------- */
-
-function prepareAudio() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    if (audioContext.state === "suspended") {
-        audioContext.resume();
-    }
-}
-
-/* Short original electronic concert intro */
-function playConcertBeat() {
-    if (!audioContext) return;
-
-    const now = audioContext.currentTime;
-
-    // Bass hits
-    const bassNotes = [110, 110, 146.83, 164.81, 220];
-
-    bassNotes.forEach((frequency, index) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-
-        oscillator.type = "sawtooth";
-        oscillator.frequency.value = frequency;
-
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-
-        const start = now + index * 0.28;
-
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.25);
-
-        oscillator.start(start);
-        oscillator.stop(start + 0.27);
-    });
-
-    // Bright synth notes
-    const synthNotes = [
-        { frequency: 523.25, delay: 1.45 },
-        { frequency: 659.25, delay: 1.65 },
-        { frequency: 783.99, delay: 1.85 },
-        { frequency: 1046.50, delay: 2.05 }
-    ];
-
-    synthNotes.forEach((note) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-
-        oscillator.type = "square";
-        oscillator.frequency.value = note.frequency;
-
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-
-        const start = now + note.delay;
-
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.08, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
-
-        oscillator.start(start);
-        oscillator.stop(start + 0.25);
-    });
-}
-
-/* -------------------------
-   DJ VOICE
-------------------------- */
-
-concertAudio.pause();
-concertAudio.currentTime = 0;
-
-    const text =
-        "ShioGonz Live presents. " +
-        eventName +
-        ". Get ready. The event starts now!";
-
-    const speech = new SpeechSynthesisUtterance(text);
-
-    speech.rate = 0.9;
-    speech.pitch = 0.75;
-    speech.volume = 1;
-
-    const voices = speechSynthesis.getVoices();
-
-    const englishVoice =
-        voices.find(
-            voice =>
-                voice.lang.startsWith("en") &&
-                voice.name.toLowerCase().includes("male")
-        ) ||
-        voices.find(voice => voice.lang.startsWith("en")) ||
-        voices[0];
-
-    if (englishVoice) {
-        speech.voice = englishVoice;
-    }
-
-    speech.onend = function () {
-        playConcertBeat();
-        createConfetti();
-    };
-
-    speechSynthesis.speak(speech);
-}
-
-/* -------------------------
-   CONFETTI
-------------------------- */
-
+/* CONFETTI */
 function createConfetti() {
     if (!confettiContainer) return;
 
@@ -149,7 +34,7 @@ function createConfetti() {
         "#ffffff"
     ];
 
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 150; i++) {
         const piece = document.createElement("div");
 
         piece.classList.add("confetti-piece");
@@ -178,10 +63,8 @@ function createConfetti() {
     }, 7000);
 }
 
-/* -------------------------
-   FINAL CELEBRATION
-------------------------- */
-function showEventCelebration(eventName) {
+/* FINAL CONCERT SCREEN */
+function showEventCelebration() {
 
     if (eventOverlay) {
         eventOverlay.classList.add("show");
@@ -189,32 +72,29 @@ function showEventCelebration(eventName) {
 
     createConfetti();
 
+    /* Music has already been activated by Start Countdown */
+    concertAudio.loop = false;
     concertAudio.currentTime = 0;
     concertAudio.volume = 1;
+}
 
-    concertAudio.play().catch(error => {
-        console.log("Audio could not start:", error);
+/* CLOSE CONCERT SCREEN */
+if (closeOverlay) {
+    closeOverlay.addEventListener("click", function () {
+
+        eventOverlay.classList.remove("show");
+
+        concertAudio.pause();
+        concertAudio.currentTime = 0;
+
+        if (confettiContainer) {
+            confettiContainer.innerHTML = "";
+        }
     });
 }
 
-
-/* -------------------------
-   COUNTDOWN
-------------------------- */
-
+/* START COUNTDOWN */
 startButton.addEventListener("click", function () {
-concertAudio.volume = 0;
-
-concertAudio.play()
-    .then(() => {
-        concertAudio.pause();
-        concertAudio.currentTime = 0;
-        concertAudio.volume = 1;
-    })
-    .catch(() => {
-        concertAudio.volume = 1;
-    });
-    prepareAudio();
 
     const eventName = eventNameInput.value.trim();
     const eventDateValue = eventDateInput.value;
@@ -224,6 +104,20 @@ concertAudio.play()
             "Please enter an event name and date.";
         return;
     }
+
+    /*
+       Start the music silently while the user is
+       physically clicking the button.
+       This avoids Chrome autoplay blocking it later.
+    */
+    concertAudio.pause();
+    concertAudio.currentTime = 0;
+    concertAudio.volume = 0;
+    concertAudio.loop = true;
+
+    concertAudio.play().catch(error => {
+        console.log("Audio activation error:", error);
+    });
 
     const eventDate = new Date(eventDateValue).getTime();
 
@@ -238,7 +132,8 @@ concertAudio.play()
 
     updateCountdown();
 
-    countdownInterval = setInterval(updateCountdown, 1000);
+    countdownInterval =
+        setInterval(updateCountdown, 1000);
 
     function updateCountdown() {
 
@@ -257,7 +152,7 @@ concertAudio.play()
             message.textContent =
                 "The event has started!";
 
-            showEventCelebration(eventName);
+            showEventCelebration();
 
             return;
         }
