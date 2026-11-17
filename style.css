@@ -637,3 +637,18 @@ select#eventName {
   color: #8b2876;
   cursor: pointer;
 }
+.show-button-look {
+  display: inline-block;
+  min-width: 190px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff2ec4, #8f5cff);
+  color: white;
+  font-weight: 900;
+  letter-spacing: 1px;
+  box-shadow:
+    0 0 18px rgba(255, 46, 196, 0.6),
+    0 0 35px rgba(143, 92, 255, 0.4);
+  animation: buttonBeat 1.2s ease-in-out infinite;
+  cursor: default;
+}
