@@ -10,74 +10,15 @@ const secondsElement = document.getElementById("seconds");
 const message = document.getElementById("message");
 
 const eventOverlay = document.getElementById("eventStartedOverlay");
-const closeOverlay = document.getElementById("closeOverlay");
+const showButton = document.getElementById("closeOverlay");
 const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
 
-let audioContext;
-let concertBuffer;
-let currentSource;
+const concertAudio = new Audio("./concert-intro.mp3");
+concertAudio.preload = "auto";
 
-/* -------------------------
-   PREPARE MUSIC FOR MOBILE
-------------------------- */
-
-async function prepareConcertAudio() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    if (audioContext.state === "suspended") {
-        await audioContext.resume();
-    }
-
-    if (!concertBuffer) {
-        const response = await fetch("./concert-intro.mp3");
-        const arrayBuffer = await response.arrayBuffer();
-        concertBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    }
-}
-
-/* -------------------------
-   PLAY MUSIC
-------------------------- */
-
-function playConcertMusic() {
-    if (!audioContext || !concertBuffer) {
-        console.log("Concert audio is not ready.");
-        return;
-    }
-
-    if (currentSource) {
-        try {
-            currentSource.stop();
-        } catch (error) {}
-    }
-
-    currentSource = audioContext.createBufferSource();
-    currentSource.buffer = concertBuffer;
-    currentSource.connect(audioContext.destination);
-    currentSource.start(0);
-}
-
-/* -------------------------
-   STOP MUSIC
-------------------------- */
-
-function stopConcertMusic() {
-    if (currentSource) {
-        try {
-            currentSource.stop();
-        } catch (error) {}
-
-        currentSource = null;
-    }
-}
-
-/* -------------------------
-   CONFETTI
-------------------------- */
+/* CONFETTI */
 
 function createConfetti() {
     if (!confettiContainer) return;
@@ -116,49 +57,40 @@ function createConfetti() {
 
         confettiContainer.appendChild(piece);
     }
-
-    setTimeout(() => {
-        confettiContainer.innerHTML = "";
-    }, 7000);
 }
 
-/* -------------------------
-   EVENT STARTED
-------------------------- */
+/* EVENT REACHES ZERO */
 
 function showEventCelebration() {
-
     if (eventOverlay) {
         eventOverlay.classList.add("show");
     }
 
     createConfetti();
 
-    playConcertMusic();
+    showButton.textContent = "START THE SHOW 🎶";
 }
 
-/* -------------------------
-   CLOSE FINAL SCREEN
-------------------------- */
+/* USER STARTS THE MUSIC */
 
-if (closeOverlay) {
-    closeOverlay.addEventListener("click", function () {
+showButton.addEventListener("click", function () {
 
-        eventOverlay.classList.remove("show");
+    concertAudio.pause();
+    concertAudio.currentTime = 0;
+    concertAudio.volume = 1;
 
-        stopConcertMusic();
+    concertAudio.play()
+        .then(() => {
+            showButton.textContent = "🎶 SHOWTIME! 🎶";
+        })
+        .catch(error => {
+            console.log("Music error:", error);
+        });
+});
 
-        if (confettiContainer) {
-            confettiContainer.innerHTML = "";
-        }
-    });
-}
+/* START COUNTDOWN */
 
-/* -------------------------
-   START COUNTDOWN
-------------------------- */
-
-startButton.addEventListener("click", async function () {
+startButton.addEventListener("click", function () {
 
     const eventName = eventNameInput.value.trim();
     const eventDateValue = eventDateInput.value;
@@ -169,15 +101,9 @@ startButton.addEventListener("click", async function () {
         return;
     }
 
-    /*
-       Prepare audio because this click is a real
-       user action. Music will NOT play yet.
-    */
-    try {
-        await prepareConcertAudio();
-    } catch (error) {
-        console.log("Audio preparation error:", error);
-    }
+    /* Music stays completely stopped */
+    concertAudio.pause();
+    concertAudio.currentTime = 0;
 
     const eventDate = new Date(eventDateValue).getTime();
 
@@ -187,8 +113,6 @@ startButton.addEventListener("click", async function () {
     if (eventOverlay) {
         eventOverlay.classList.remove("show");
     }
-
-    stopConcertMusic();
 
     clearInterval(countdownInterval);
 
