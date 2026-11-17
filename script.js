@@ -9,6 +9,7 @@ const minutesElement = document.getElementById("minutes");
 const secondsElement = document.getElementById("seconds");
 const message = document.getElementById("message");
 
+const eventOverlay = document.getElementById("eventStartedOverlay");
 const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
@@ -18,7 +19,10 @@ let musicBuffer;
 let scheduledMusic;
 let keepAudioAlive;
 
-/* Preload the music file */
+/* --------------------------------
+   PRELOAD MUSIC
+-------------------------------- */
+
 const musicFilePromise = fetch("./concert-intro.mp3")
     .then(response => {
         if (!response.ok) {
@@ -28,9 +32,9 @@ const musicFilePromise = fetch("./concert-intro.mp3")
         return response.arrayBuffer();
     });
 
-/* -------------------------
+/* --------------------------------
    PREPARE AND SCHEDULE MUSIC
-------------------------- */
+-------------------------------- */
 
 async function scheduleConcertMusic(eventTimestamp) {
 
@@ -39,17 +43,13 @@ async function scheduleConcertMusic(eventTimestamp) {
             new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    /*
-       The user physically pressed Start Countdown,
-       so we unlock the audio system here.
-    */
     if (audioContext.state === "suspended") {
         await audioContext.resume();
     }
 
     /*
-       Keep the mobile audio system active,
-       but completely silent.
+       Keep the mobile audio system active silently.
+       Nothing should be heard here.
     */
     if (!keepAudioAlive) {
 
@@ -66,7 +66,9 @@ async function scheduleConcertMusic(eventTimestamp) {
         keepAudioAlive = oscillator;
     }
 
-    /* Load/decode music only once */
+    /*
+       Load the MP3 only once.
+    */
     if (!musicBuffer) {
 
         const arrayBuffer = await musicFilePromise;
@@ -77,7 +79,6 @@ async function scheduleConcertMusic(eventTimestamp) {
             );
     }
 
-    /* Cancel previous scheduled song */
     stopConcertMusic();
 
     const secondsUntilEvent =
@@ -96,10 +97,8 @@ async function scheduleConcertMusic(eventTimestamp) {
     );
 
     /*
-       THIS is the important part:
-       the song is scheduled now,
-       but it will not be heard until
-       the countdown reaches zero.
+       The music is scheduled now,
+       but should begin when the timer reaches zero.
     */
     scheduledMusic.start(
         audioContext.currentTime +
@@ -107,9 +106,9 @@ async function scheduleConcertMusic(eventTimestamp) {
     );
 }
 
-/* -------------------------
+/* --------------------------------
    STOP MUSIC
-------------------------- */
+-------------------------------- */
 
 function stopConcertMusic() {
 
@@ -117,15 +116,17 @@ function stopConcertMusic() {
 
         try {
             scheduledMusic.stop();
-        } catch (error) {}
+        } catch (error) {
+            // Already stopped
+        }
 
         scheduledMusic = null;
     }
 }
 
-/* -------------------------
+/* --------------------------------
    CONFETTI
-------------------------- */
+-------------------------------- */
 
 function createConfetti() {
 
@@ -182,9 +183,10 @@ function createConfetti() {
     }, 7000);
 }
 
-/* -------------------------
-   EVENT STARTED
-------------------------- */
+/* --------------------------------
+   EVENT START CELEBRATION
+-------------------------------- */
+
 function showEventCelebration() {
 
     if (eventOverlay) {
@@ -192,42 +194,15 @@ function showEventCelebration() {
     }
 
     createConfetti();
-
-    concertAudio.pause();
-    concertAudio.currentTime = 0;
-    concertAudio.volume = 1;
-
-    concertAudio.play().catch(error => {
-        console.log("Music playback error:", error);
-    });
 }
 
-
-/* -------------------------
-   CLOSE FINAL SCREEN
-------------------------- */
-
-if (closeOverlay) {
-
-
-            eventOverlay.classList.remove("show");
-
-            stopConcertMusic();
-
-            if (confettiContainer) {
-                confettiContainer.innerHTML = "";
-            }
-        }
-    );
-}
-
-/* -------------------------
+/* --------------------------------
    START COUNTDOWN
-------------------------- */
+-------------------------------- */
 
 startButton.addEventListener(
     "click",
-    async function () {
+    function () {
 
         const eventName =
             eventNameInput.value;
@@ -251,14 +226,19 @@ startButton.addEventListener(
                 eventDateValue
             ).getTime();
 
-        /* Schedule music from this user click */
+        /*
+           IMPORTANT:
+           Prepare the music in the background.
+           We DO NOT wait for it before starting
+           the countdown.
+        */
         scheduleConcertMusic(eventDate)
-    .catch(error => {
-        console.log(
-            "Audio preparation error:",
-            error
-        );
-    });
+            .catch(error => {
+                console.log(
+                    "Audio preparation error:",
+                    error
+                );
+            });
 
         eventTitle.textContent =
             eventName;
@@ -273,6 +253,9 @@ startButton.addEventListener(
             countdownInterval
         );
 
+        /*
+           Start immediately.
+        */
         updateCountdown();
 
         countdownInterval =
