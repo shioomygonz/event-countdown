@@ -9,8 +9,6 @@ const minutesElement = document.getElementById("minutes");
 const secondsElement = document.getElementById("seconds");
 const message = document.getElementById("message");
 
-const eventOverlay = document.getElementById("eventStartedOverlay");
-const closeOverlay = document.getElementById("closeOverlay");
 const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
@@ -187,7 +185,6 @@ function createConfetti() {
 /* -------------------------
    EVENT STARTED
 ------------------------- */
-
 function showEventCelebration() {
 
     if (eventOverlay) {
@@ -195,7 +192,16 @@ function showEventCelebration() {
     }
 
     createConfetti();
+
+    concertAudio.pause();
+    concertAudio.currentTime = 0;
+    concertAudio.volume = 1;
+
+    concertAudio.play().catch(error => {
+        console.log("Music playback error:", error);
+    });
 }
+
 
 /* -------------------------
    CLOSE FINAL SCREEN
@@ -203,9 +209,6 @@ function showEventCelebration() {
 
 if (closeOverlay) {
 
-    closeOverlay.addEventListener(
-        "click",
-        function () {
 
             eventOverlay.classList.remove("show");
 
