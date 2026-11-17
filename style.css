@@ -312,3 +312,315 @@ label {
     opacity: 1;
   }
 }
+/* =========================
+   FINAL CONCERT CELEBRATION
+   ========================= */
+
+.event-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 0, 170, 0.35), transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(88, 70, 255, 0.35), transparent 30%),
+    rgba(5, 2, 15, 0.96);
+  align-items: center;
+  justify-content: center;
+}
+
+.event-overlay.show {
+  display: flex;
+  animation: concertFadeIn 0.6s ease forwards;
+}
+
+/* Moving concert lights */
+.concert-lights::before,
+.concert-lights::after {
+  content: "";
+  position: absolute;
+  top: -25%;
+  width: 220px;
+  height: 150%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 0, 200, 0.5),
+    transparent 70%
+  );
+  filter: blur(18px);
+  transform-origin: top center;
+  animation: movingLight 2.2s ease-in-out infinite alternate;
+}
+
+.concert-lights::before {
+  left: 12%;
+  transform: rotate(22deg);
+}
+
+.concert-lights::after {
+  right: 12%;
+  transform: rotate(-22deg);
+  animation-delay: 0.8s;
+}
+
+.event-started-card {
+  position: relative;
+  width: 92%;
+  max-width: 980px;
+  height: 82vh;
+  max-height: 720px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #0b0614;
+  box-shadow:
+    0 0 35px rgba(255, 0, 190, 0.45),
+    0 0 80px rgba(100, 70, 255, 0.3);
+  animation: concertCardEnter 0.9s cubic-bezier(.2,.8,.2,1);
+}
+
+/* Big event image */
+.event-image-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.event-start-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: concertZoom 8s ease-in-out infinite alternate;
+  transform: scale(1.03);
+}
+
+/* Dark cinematic overlay */
+.event-started-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to top,
+      rgba(7, 3, 18, 0.95) 0%,
+      rgba(7, 3, 18, 0.45) 45%,
+      rgba(7, 3, 18, 0.15) 100%
+    );
+  z-index: 1;
+}
+
+/* Content on top of image */
+.show-content {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 7%;
+  transform: translateX(-50%);
+  width: 90%;
+  text-align: center;
+}
+
+.show-intro {
+  margin-bottom: 10px;
+  color: #ff8ce8;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  animation: textGlow 1.7s ease-in-out infinite alternate;
+}
+
+.event-started-card h2 {
+  margin: 0;
+  color: white;
+  font-size: clamp(2.6rem, 7vw, 5.5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.7),
+    0 0 25px rgba(255, 0, 200, 0.8),
+    0 0 50px rgba(125, 70, 255, 0.8);
+  animation: headlinePulse 1.4s ease-in-out infinite alternate;
+}
+
+.showtime {
+  margin: 14px 0 18px;
+  color: #ffd6f7;
+  font-size: 1.15rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+#closeOverlay {
+  width: auto;
+  min-width: 190px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff2ec4, #8f5cff);
+  color: white;
+  font-weight: 900;
+  letter-spacing: 1px;
+  box-shadow:
+    0 0 18px rgba(255, 46, 196, 0.6),
+    0 0 35px rgba(143, 92, 255, 0.4);
+  animation: buttonBeat 1.2s ease-in-out infinite;
+}
+
+/* LIVE badge */
+.live-badge {
+  position: absolute;
+  z-index: 5;
+  top: 22px;
+  left: 22px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 0, 76, 0.92);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  box-shadow: 0 0 20px rgba(255, 0, 76, 0.65);
+  animation: liveBlink 1s infinite;
+}
+
+/* Confetti layer */
+#confettiContainer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -30px;
+  width: 10px;
+  height: 18px;
+  border-radius: 3px;
+  animation: confettiFall linear forwards;
+}
+
+/* Animations */
+
+@keyframes concertFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes concertCardEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+
+  70% {
+    transform: scale(1.03);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes concertZoom {
+  from {
+    transform: scale(1.03);
+  }
+
+  to {
+    transform: scale(1.14);
+  }
+}
+
+@keyframes movingLight {
+  from {
+    transform: rotate(15deg) translateX(-30px);
+  }
+
+  to {
+    transform: rotate(35deg) translateX(50px);
+  }
+}
+
+@keyframes textGlow {
+  from {
+    opacity: 0.7;
+    text-shadow: 0 0 8px #ff4bd8;
+  }
+
+  to {
+    opacity: 1;
+    text-shadow:
+      0 0 18px #ff4bd8,
+      0 0 32px #8f5cff;
+  }
+}
+
+@keyframes headlinePulse {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes buttonBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes liveBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .event-started-card {
+    width: 94%;
+    height: 78vh;
+  }
+
+  .show-intro {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+  }
+
+  .showtime {
+    font-size: 0.95rem;
+  }
+
+  .live-badge {
+    top: 15px;
+    left: 15px;
+  }
+}
