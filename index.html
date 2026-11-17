@@ -4,35 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShioGonz Live Event Countdown</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 
 <body>
 
-    <h1>ShioGonz Live Event Countdown</h1>
+    <div class="container">
 
-    <label for="eventName">Event Name:</label>
-    <input type="text" id="eventName" placeholder="Enter event name">
+        <h1>ShioGonz Live Event Countdown</h1>
 
-    <br><br>
+        <p>Create a countdown for your next live event.</p>
 
-    <label for="eventDate">Event Date and Time:</label>
-    <input type="datetime-local" id="eventDate">
+        <label for="eventName">Event Name:</label>
+        <input
+            type="text"
+            id="eventName"
+            placeholder="Enter event name"
+        >
 
-    <br><br>
+        <label for="eventDate">Event Date and Time:</label>
+        <input
+            type="datetime-local"
+            id="eventDate"
+        >
 
-    <button id="startButton">Start Countdown</button>
+        <button id="startButton">
+            Start Countdown
+        </button>
 
-    <h2 id="eventTitle">Your event countdown will appear here</h2>
+        <h2 id="eventTitle">
+            Your event countdown will appear here
+        </h2>
 
-    <div id="countdown">
-        <p><span id="days">0</span> Days</p>
-        <p><span id="hours">0</span> Hours</p>
-        <p><span id="minutes">0</span> Minutes</p>
-        <p><span id="seconds">0</span> Seconds</p>
+        <div id="countdown">
+
+            <div>
+                <span id="days">0</span>
+                <span class="label">Days</span>
+            </div>
+
+            <div>
+                <span id="hours">0</span>
+                <span class="label">Hours</span>
+            </div>
+
+            <div>
+                <span id="minutes">0</span>
+                <span class="label">Minutes</span>
+            </div>
+
+            <div>
+                <span id="seconds">0</span>
+                <span class="label">Seconds</span>
+            </div>
+
+        </div>
+
+        <p id="message"></p>
+
     </div>
 
-    <p id="message"></p>
     <script src="script.js"></script>
 
 </body>
