@@ -624,3 +624,16 @@ label {
     left: 15px;
   }
 }
+select#eventName {
+  width: 100%;
+  padding: 14px 16px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  background: rgba(255, 255, 255, 0.94);
+  color: #8b2876;
+  cursor: pointer;
+}
