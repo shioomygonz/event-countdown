@@ -10,17 +10,127 @@ const secondsElement = document.getElementById("seconds");
 const message = document.getElementById("message");
 
 const eventOverlay = document.getElementById("eventStartedOverlay");
-const showButton = document.getElementById("closeOverlay");
+const closeOverlay = document.getElementById("closeOverlay");
 const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
 
-const concertAudio = new Audio("./concert-intro.mp3");
-concertAudio.preload = "auto";
+let audioContext;
+let musicBuffer;
+let scheduledMusic;
+let keepAudioAlive;
 
-/* CONFETTI */
+/* Preload the music file */
+const musicFilePromise = fetch("./concert-intro.mp3")
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Music file could not be loaded.");
+        }
+
+        return response.arrayBuffer();
+    });
+
+/* -------------------------
+   PREPARE AND SCHEDULE MUSIC
+------------------------- */
+
+async function scheduleConcertMusic(eventTimestamp) {
+
+    if (!audioContext) {
+        audioContext =
+            new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    /*
+       The user physically pressed Start Countdown,
+       so we unlock the audio system here.
+    */
+    if (audioContext.state === "suspended") {
+        await audioContext.resume();
+    }
+
+    /*
+       Keep the mobile audio system active,
+       but completely silent.
+    */
+    if (!keepAudioAlive) {
+
+        const oscillator = audioContext.createOscillator();
+        const silentGain = audioContext.createGain();
+
+        silentGain.gain.value = 0.00001;
+
+        oscillator.connect(silentGain);
+        silentGain.connect(audioContext.destination);
+
+        oscillator.start();
+
+        keepAudioAlive = oscillator;
+    }
+
+    /* Load/decode music only once */
+    if (!musicBuffer) {
+
+        const arrayBuffer = await musicFilePromise;
+
+        musicBuffer =
+            await audioContext.decodeAudioData(
+                arrayBuffer.slice(0)
+            );
+    }
+
+    /* Cancel previous scheduled song */
+    stopConcertMusic();
+
+    const secondsUntilEvent =
+        Math.max(
+            0,
+            (eventTimestamp - Date.now()) / 1000
+        );
+
+    scheduledMusic =
+        audioContext.createBufferSource();
+
+    scheduledMusic.buffer = musicBuffer;
+
+    scheduledMusic.connect(
+        audioContext.destination
+    );
+
+    /*
+       THIS is the important part:
+       the song is scheduled now,
+       but it will not be heard until
+       the countdown reaches zero.
+    */
+    scheduledMusic.start(
+        audioContext.currentTime +
+        secondsUntilEvent
+    );
+}
+
+/* -------------------------
+   STOP MUSIC
+------------------------- */
+
+function stopConcertMusic() {
+
+    if (scheduledMusic) {
+
+        try {
+            scheduledMusic.stop();
+        } catch (error) {}
+
+        scheduledMusic = null;
+    }
+}
+
+/* -------------------------
+   CONFETTI
+------------------------- */
 
 function createConfetti() {
+
     if (!confettiContainer) return;
 
     confettiContainer.innerHTML = "";
@@ -35,13 +145,24 @@ function createConfetti() {
     ];
 
     for (let i = 0; i < 150; i++) {
-        const piece = document.createElement("div");
 
-        piece.classList.add("confetti-piece");
+        const piece =
+            document.createElement("div");
 
-        piece.style.left = Math.random() * 100 + "%";
+        piece.classList.add(
+            "confetti-piece"
+        );
+
+        piece.style.left =
+            Math.random() * 100 + "%";
+
         piece.style.background =
-            colors[Math.floor(Math.random() * colors.length)];
+            colors[
+                Math.floor(
+                    Math.random() *
+                    colors.length
+                )
+            ];
 
         piece.style.animationDuration =
             2.5 + Math.random() * 3 + "s";
@@ -57,114 +178,183 @@ function createConfetti() {
 
         confettiContainer.appendChild(piece);
     }
+
+    setTimeout(() => {
+        confettiContainer.innerHTML = "";
+    }, 7000);
 }
 
-/* EVENT REACHES ZERO */
+/* -------------------------
+   EVENT STARTED
+------------------------- */
 
 function showEventCelebration() {
+
     if (eventOverlay) {
         eventOverlay.classList.add("show");
     }
 
     createConfetti();
-
-    showButton.textContent = "START THE SHOW 🎶";
 }
 
-/* USER STARTS THE MUSIC */
+/* -------------------------
+   CLOSE FINAL SCREEN
+------------------------- */
 
-showButton.addEventListener("click", function () {
+if (closeOverlay) {
 
-    concertAudio.pause();
-    concertAudio.currentTime = 0;
-    concertAudio.volume = 1;
+    closeOverlay.addEventListener(
+        "click",
+        function () {
 
-    concertAudio.play()
-        .then(() => {
-            showButton.textContent = "🎶 SHOWTIME! 🎶";
-        })
-        .catch(error => {
-            console.log("Music error:", error);
-        });
-});
+            eventOverlay.classList.remove("show");
 
-/* START COUNTDOWN */
+            stopConcertMusic();
 
-startButton.addEventListener("click", function () {
+            if (confettiContainer) {
+                confettiContainer.innerHTML = "";
+            }
+        }
+    );
+}
 
-    const eventName = eventNameInput.value.trim();
-    const eventDateValue = eventDateInput.value;
+/* -------------------------
+   START COUNTDOWN
+------------------------- */
 
-    if (eventName === "" || eventDateValue === "") {
-        message.textContent =
-            "Please enter an event name and date.";
-        return;
-    }
+startButton.addEventListener(
+    "click",
+    async function () {
 
-    /* Music stays completely stopped */
-    concertAudio.pause();
-    concertAudio.currentTime = 0;
+        const eventName =
+            eventNameInput.value;
 
-    const eventDate = new Date(eventDateValue).getTime();
+        const eventDateValue =
+            eventDateInput.value;
 
-    eventTitle.textContent = eventName;
-    message.textContent = "";
-
-    if (eventOverlay) {
-        eventOverlay.classList.remove("show");
-    }
-
-    clearInterval(countdownInterval);
-
-    updateCountdown();
-
-    countdownInterval =
-        setInterval(updateCountdown, 1000);
-
-    function updateCountdown() {
-
-        const now = new Date().getTime();
-        const distance = eventDate - now;
-
-        if (distance <= 0) {
-
-            clearInterval(countdownInterval);
-
-            daysElement.textContent = "0";
-            hoursElement.textContent = "0";
-            minutesElement.textContent = "0";
-            secondsElement.textContent = "0";
+        if (
+            eventName === "" ||
+            eventDateValue === ""
+        ) {
 
             message.textContent =
-                "The event has started!";
-
-            showEventCelebration();
+                "Please select an event and date.";
 
             return;
         }
 
-        const days = Math.floor(
-            distance / (1000 * 60 * 60 * 24)
+        const eventDate =
+            new Date(
+                eventDateValue
+            ).getTime();
+
+        /* Schedule music from this user click */
+        try {
+
+            await scheduleConcertMusic(
+                eventDate
+            );
+
+        } catch (error) {
+
+            console.log(
+                "Audio preparation error:",
+                error
+            );
+        }
+
+        eventTitle.textContent =
+            eventName;
+
+        message.textContent = "";
+
+        if (eventOverlay) {
+            eventOverlay.classList.remove("show");
+        }
+
+        clearInterval(
+            countdownInterval
         );
 
-        const hours = Math.floor(
-            (distance % (1000 * 60 * 60 * 24)) /
-            (1000 * 60 * 60)
-        );
+        updateCountdown();
 
-        const minutes = Math.floor(
-            (distance % (1000 * 60 * 60)) /
-            (1000 * 60)
-        );
+        countdownInterval =
+            setInterval(
+                updateCountdown,
+                1000
+            );
 
-        const seconds = Math.floor(
-            (distance % (1000 * 60)) /
-            1000
-        );
+        function updateCountdown() {
 
-        daysElement.textContent = days;
-        hoursElement.textContent = hours;
-        minutesElement.textContent = minutes;
-        secondsElement.textContent = seconds;
+            const now =
+                Date.now();
+
+            const distance =
+                eventDate - now;
+
+            if (distance <= 0) {
+
+                clearInterval(
+                    countdownInterval
+                );
+
+                daysElement.textContent = "0";
+                hoursElement.textContent = "0";
+                minutesElement.textContent = "0";
+                secondsElement.textContent = "0";
+
+                message.textContent =
+                    "The event has started!";
+
+                showEventCelebration();
+
+                return;
+            }
+
+            const days =
+                Math.floor(
+                    distance /
+                    (1000 * 60 * 60 * 24)
+                );
+
+            const hours =
+                Math.floor(
+                    (
+                        distance %
+                        (1000 * 60 * 60 * 24)
+                    ) /
+                    (1000 * 60 * 60)
+                );
+
+            const minutes =
+                Math.floor(
+                    (
+                        distance %
+                        (1000 * 60 * 60)
+                    ) /
+                    (1000 * 60)
+                );
+
+            const seconds =
+                Math.floor(
+                    (
+                        distance %
+                        (1000 * 60)
+                    ) /
+                    1000
+                );
+
+            daysElement.textContent =
+                days;
+
+            hoursElement.textContent =
+                hours;
+
+            minutesElement.textContent =
+                minutes;
+
+            secondsElement.textContent =
+                seconds;
+        }
     }
-});
+);
