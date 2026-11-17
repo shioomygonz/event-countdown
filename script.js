@@ -15,6 +15,8 @@ const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
 let audioContext;
+const concertAudio = new Audio("concert-intro.mp3");
+concertAudio.preload = "auto";
 
 /* -------------------------
    AUDIO SETUP
@@ -92,14 +94,8 @@ function playConcertBeat() {
    DJ VOICE
 ------------------------- */
 
-function speakDJIntro(eventName) {
-    if (!("speechSynthesis" in window)) {
-        playConcertBeat();
-        createConfetti();
-        return;
-    }
-
-    speechSynthesis.cancel();
+concertAudio.pause();
+concertAudio.currentTime = 0;
 
     const text =
         "ShioGonz Live presents. " +
@@ -185,44 +181,39 @@ function createConfetti() {
 /* -------------------------
    FINAL CELEBRATION
 ------------------------- */
-
 function showEventCelebration(eventName) {
 
     if (eventOverlay) {
         eventOverlay.classList.add("show");
     }
 
-    /* Confetti starts immediately */
     createConfetti();
 
-    /* DJ voice */
-    setTimeout(() => {
-        speakDJIntro(eventName);
-    }, 500);
-}
+    concertAudio.currentTime = 0;
+    concertAudio.volume = 1;
 
-/* Close final screen */
-if (closeOverlay) {
-    closeOverlay.addEventListener("click", function () {
-
-        eventOverlay.classList.remove("show");
-
-        if ("speechSynthesis" in window) {
-            speechSynthesis.cancel();
-        }
-
-        if (confettiContainer) {
-            confettiContainer.innerHTML = "";
-        }
+    concertAudio.play().catch(error => {
+        console.log("Audio could not start:", error);
     });
 }
+
 
 /* -------------------------
    COUNTDOWN
 ------------------------- */
 
 startButton.addEventListener("click", function () {
+concertAudio.volume = 0;
 
+concertAudio.play()
+    .then(() => {
+        concertAudio.pause();
+        concertAudio.currentTime = 0;
+        concertAudio.volume = 1;
+    })
+    .catch(() => {
+        concertAudio.volume = 1;
+    });
     prepareAudio();
 
     const eventName = eventNameInput.value.trim();
