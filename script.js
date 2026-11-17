@@ -15,11 +15,70 @@ const confettiContainer = document.getElementById("confettiContainer");
 
 let countdownInterval;
 
-/* MUSIC */
-const concertAudio = new Audio("./concert-intro.mp3");
-concertAudio.preload = "auto";
+let audioContext;
+let concertBuffer;
+let currentSource;
 
-/* CONFETTI */
+/* -------------------------
+   PREPARE MUSIC FOR MOBILE
+------------------------- */
+
+async function prepareConcertAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (audioContext.state === "suspended") {
+        await audioContext.resume();
+    }
+
+    if (!concertBuffer) {
+        const response = await fetch("./concert-intro.mp3");
+        const arrayBuffer = await response.arrayBuffer();
+        concertBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    }
+}
+
+/* -------------------------
+   PLAY MUSIC
+------------------------- */
+
+function playConcertMusic() {
+    if (!audioContext || !concertBuffer) {
+        console.log("Concert audio is not ready.");
+        return;
+    }
+
+    if (currentSource) {
+        try {
+            currentSource.stop();
+        } catch (error) {}
+    }
+
+    currentSource = audioContext.createBufferSource();
+    currentSource.buffer = concertBuffer;
+    currentSource.connect(audioContext.destination);
+    currentSource.start(0);
+}
+
+/* -------------------------
+   STOP MUSIC
+------------------------- */
+
+function stopConcertMusic() {
+    if (currentSource) {
+        try {
+            currentSource.stop();
+        } catch (error) {}
+
+        currentSource = null;
+    }
+}
+
+/* -------------------------
+   CONFETTI
+------------------------- */
+
 function createConfetti() {
     if (!confettiContainer) return;
 
@@ -63,7 +122,10 @@ function createConfetti() {
     }, 7000);
 }
 
-/* FINAL CONCERT SCREEN */
+/* -------------------------
+   EVENT STARTED
+------------------------- */
+
 function showEventCelebration() {
 
     if (eventOverlay) {
@@ -72,20 +134,19 @@ function showEventCelebration() {
 
     createConfetti();
 
-    /* Music has already been activated by Start Countdown */
-    concertAudio.loop = false;
-    concertAudio.currentTime = 0;
-    concertAudio.volume = 1;
+    playConcertMusic();
 }
 
-/* CLOSE CONCERT SCREEN */
+/* -------------------------
+   CLOSE FINAL SCREEN
+------------------------- */
+
 if (closeOverlay) {
     closeOverlay.addEventListener("click", function () {
 
         eventOverlay.classList.remove("show");
 
-        concertAudio.pause();
-        concertAudio.currentTime = 0;
+        stopConcertMusic();
 
         if (confettiContainer) {
             confettiContainer.innerHTML = "";
@@ -93,8 +154,11 @@ if (closeOverlay) {
     });
 }
 
-/* START COUNTDOWN */
-startButton.addEventListener("click", function () {
+/* -------------------------
+   START COUNTDOWN
+------------------------- */
+
+startButton.addEventListener("click", async function () {
 
     const eventName = eventNameInput.value.trim();
     const eventDateValue = eventDateInput.value;
@@ -106,18 +170,14 @@ startButton.addEventListener("click", function () {
     }
 
     /*
-       Start the music silently while the user is
-       physically clicking the button.
-       This avoids Chrome autoplay blocking it later.
+       Prepare audio because this click is a real
+       user action. Music will NOT play yet.
     */
-    concertAudio.pause();
-    concertAudio.currentTime = 0;
-    concertAudio.volume = 0;
-    concertAudio.loop = true;
-
-    concertAudio.play().catch(error => {
-        console.log("Audio activation error:", error);
-    });
+    try {
+        await prepareConcertAudio();
+    } catch (error) {
+        console.log("Audio preparation error:", error);
+    }
 
     const eventDate = new Date(eventDateValue).getTime();
 
@@ -127,6 +187,8 @@ startButton.addEventListener("click", function () {
     if (eventOverlay) {
         eventOverlay.classList.remove("show");
     }
+
+    stopConcertMusic();
 
     clearInterval(countdownInterval);
 
